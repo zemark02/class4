@@ -49,6 +49,9 @@ class UsersController < ApplicationController
 
   # DELETE /users/1 or /users/1.json
   def destroy
+    @user.posts.each do |p|
+      p.destroy
+    end
     @user.destroy
     # respond_to do |format|
     #   format.html { redirect_to users_url, notice: "User was successfully destroyed." }
@@ -64,6 +67,9 @@ class UsersController < ApplicationController
   end
 
   def destroy_all
+    Post.all.each do |p| 
+      p.destroy
+    end
     User.destroy_all
     redirect_to users_path
   end
@@ -82,44 +88,23 @@ class UsersController < ApplicationController
 
     public
       def main
+        @user = User.new()
       end
 
-      # def login
-      #   check = true
-
-      #   User.all.each do |us|
-      #     if(us.email == params[:email] && us.pass == params[:pass])
-      #       check = false
-           
-      #       redirect_to user_path(us.id)
-      #     end
-      #   end
-      #   if(check)
-      #     redirect_to main_path
-      #   end
-
-      # end
 
 
       def login
-        check = false
-        found_user = nil
-        User.all.each do |us|
-          if(us.email == params[:email] && us.pass == params[:pass])
-            check = true
-            found_user = us
-            break
-  
-          end
-        end
-        respond_to do |format|
+        @user = User.new(user_params)
 
-          if check
-            format.html { redirect_to user_path(found_user.id) }
-          else
-            format.html { render :main, status: :unprocessable_entity }
-          end
+       respond_to do |format|
+            if @user.login
+              format.html { redirect_to user_path(@user.id) }
+
+            else
+              format.html { render :main, status: :unprocessable_entity }
+            end
         end
       end
+
 
 end
