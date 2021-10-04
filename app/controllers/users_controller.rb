@@ -1,6 +1,6 @@
 class UsersController < ApplicationController
   before_action :set_user, only: %i[ show edit update destroy ]
-
+  before_action :logged_in, except: %i[index main login new create ]
   # GET /users or /users.json
   def index
     @users = User.all
@@ -8,6 +8,10 @@ class UsersController < ApplicationController
 
   # GET /users/1 or /users/1.json
   def show
+    if logged_in
+    else
+      return
+    end
   end
 
   # GET /users/new
@@ -67,7 +71,7 @@ class UsersController < ApplicationController
   end
 
   def destroy_all
-    Post.all.each do |p| 
+    Post.all.each do |p|
       p.destroy
     end
     User.destroy_all
@@ -82,12 +86,21 @@ class UsersController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def user_params
-      params.require(:user).permit(:email, :name, :birthdate ,:postal_code ,:address ,:pass)
+      params.require(:user).permit(:email, :name, :birthdate ,:postal_code ,:address ,:password)
+    end
+
+    def logged_in
+      if(session[:user_id] == @user.id)
+        return true
+      else
+        redirect_to main_path , notice: "Please login"
+      end
     end
 
 
     public
       def main
+        session[:user_id] = nil
         @user = User.new()
       end
 
@@ -98,9 +111,11 @@ class UsersController < ApplicationController
 
        respond_to do |format|
             if @user.login
+              session[:user_id] = @user.id
               format.html { redirect_to user_path(@user.id) }
 
             else
+              session[:user_id] = nil
               format.html { render :main, status: :unprocessable_entity }
             end
         end
